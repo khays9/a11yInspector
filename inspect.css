@@ -30,11 +30,21 @@
    border-color: #07d;
 }
 #a11y-panel .a11y-title {
-   margin: 10px 0;
-   padding: 0;
+   padding: 10px 0;
    font-size: 1.25em;
    font-weight: bold;
    text-align: center;
+}
+#a11y-panel .a11y-title:hover {
+   cursor: move;
+   cursor: grab;
+   cursor: -moz-grab;
+   cursor: -webkit-grab;
+}
+#a11y-panel .a11y-title:active {
+   cursor: grabbing;
+   cursor: -moz-grabbing;
+   cursor: -webkit-grabbing;
 }
 #a11y-panel .a11y-close {
    position: absolute;

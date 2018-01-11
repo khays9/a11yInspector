@@ -97,6 +97,8 @@ var a11yInspector = {
 
 a11yInspector.init = function() {
 
+   var thisObj = this;
+
    // Get document info from browser context
    this.doc = window.document;
    this.url = window.location.href;
@@ -119,6 +121,11 @@ a11yInspector.init = function() {
    this.evaluate();
    this.buildPanel();
   
+   // Add and event handler to detect window resize
+   $(window).on('resize.a11y', function() {
+      thisObj.handleResize();
+      return true;
+   });
 };
 
 a11yInspector.evaluate = function() {
@@ -241,7 +248,24 @@ a11yInspector.buildPanel = function () {
          'aria-label': 'a11y inspector',
          'tabindex': '0'
       })
-      .css('top', ($(document).scrollTop() + 10) + 'px');
+      .css('top', ($(document).scrollTop() + 10) + 'px')
+      .on('mousedown', function(e) {
+         thisObj.clickPos = {
+            x: e.pageX - thisObj.$panel.offset().left,
+            y: e.pageY - thisObj.$panel.offset().top
+         };
+
+         $(document).on('mousemove.a11y', function(e) {
+            thisObj.handleDrag(e);
+            return false;
+         })
+         .on('mouseup.a11y', function() {
+            $(document).off('mousemove.a11y');
+            return false;
+         });
+
+         return false;
+      });
 
    this.$title = $('<h2>')
       .text('a11yINSPECTOR')
@@ -926,13 +950,6 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
    for (var ndx = 0; ndx < ruleObj.length; ndx++) {
       var element = ruleObj[ndx];
 
-      var style = {
-         'left': element.cache_item.getStyle()[14].value,
-         'top': element.cache_item.getStyle()[15].value,
-         'width': element.cache_item.getStyle()[16].value,
-         'height': element.cache_item.getStyle()[17].value
-      };
-
       var $tr = $('<tr>');
 
       var $td = $('<td>')
@@ -1020,5 +1037,69 @@ a11yInspector.toggleChecked = function($btn) {
    }
    else {
       $btn.attr('aria-checked', 'true');
+   }
+};
+a11yInspector.handleDrag = function(e) {
+
+   var docScroll = {
+      left: $(document).scrollLeft(),
+      top: $(document).scrollTop()
+   };
+
+   var newPos = {
+      x: e.pageX - this.clickPos.x,
+      y: e.pageY - this.clickPos.y
+   };
+
+   if (newPos.x < (docScroll.left + 10)) {
+      newPos.x = docScroll.leftx + 10;
+   }
+   else if (newPos.x > this.viewSize.width - this.$panel.width() - 10) {
+      newPos.x = this.viewSize.width - this.$panel.width() - 10;
+   }
+
+   if (newPos.y < (docScroll.top + 10)) {
+      newPos.y = docScroll.top + 10;
+   }
+   else if (newPos.y > (this.viewSize.height + docScroll.top - 50)) {
+      newPos.y = this.viewSize.height + docScroll.top - 50;
+   }
+
+   this.$panel.css({
+      'left': newPos.x + 'px',
+      'top': newPos.y + 'px'
+   });
+};
+a11yInspector.handleResize = function() {
+
+   var docScroll = {
+      left: $(document).scrollLeft(),
+      top: $(document).scrollTop()
+   };
+
+   // redefine the stored viewSize
+   this.viewSize = {
+      width: $(window).width(),
+      height: $(window).height()
+   };
+
+   // Check that the panel is still on screen
+   var panelPos = {
+      left: this.$panel.offset().left,
+      top: this.$panel.offset().top
+   };
+
+   if ((panelPos.left - docScroll.left) > this.viewSize.width - this.$panel.width() - 10) {
+      this.$panel.css('left','');
+   }
+
+   if (panelPos.top > (this.viewSize.height + docScroll.top - this.$panel.height() - 10)) {
+      var newPos = docScroll.top + this.viewSize.height - this.$panel.height() - 10;
+
+      if (newPos < docScroll.top + 10) {
+         newPos = docScroll.top + 10;
+      }
+
+      this.$panel.css('top', newPos + 'px');
    }
 };
