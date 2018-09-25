@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+
+  "name": "A11yInspector Plugin",
+  "description": "This extension will evaluate a webpage using the Open Accessibility Alliance evaluation library",
+  "version": "1.0",
+  "browser_action": {
+   "default_icon": {
+      "19": "icons/icon-19x19.png",
+      "38": "icons/icon-38x38.png"
+   },
+   "default_popup": "panel.html",
+   "default_title": "a11yInspector"
+  },
+  "icons": {
+     "16": "icons/icon-16x16.png",
+     "48": "icons/icon-48x48.png",
+     "128": "icons/icon-128x128.png"
+  },
+  "content_scripts": [{
+     "matches": ["<all_urls>"],
+     "css": ["inspect.css"],
+     "js": [
+        "jquery.min.js",
+        "library/oaa_a11y_evaluation.js",
+        "library/oaa_a11y_rules.js",
+        "library/oaa_a11y_rulesets.js",
+        "inspect.js"
+     ] 
+  }],
+  "options_page": "options.html",
+  "permissions": [
+   "activeTab",
+   "storage"
+   ]
+}

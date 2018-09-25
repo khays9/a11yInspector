@@ -1,19 +1,117 @@
-#a11y-panel,
+#a11y-panel, /* Style reset */
 #a11y-panel *,
 #a11y-panel *:before,
-#a11y-panel *:after { /* Styles reset */
+#a11y-panel *:after,
+#a11y-panel div,
+#a11y-panel span,
+#a11y-panel applet,
+#a11y-panel object,
+#a11y-panel iframe,
+#a11y-panel h1,
+#a11y-panel h2,
+#a11y-panel h3,
+#a11y-panel h4,
+#a11y-panel h5,
+#a11y-panel h6,
+#a11y-panel p,
+#a11y-panel blockquote,
+#a11y-panel pre,
+#a11y-panel a,
+#a11y-panel abbr,
+#a11y-panel acronym,
+#a11y-panel address,
+#a11y-panel big,
+#a11y-panel cite,
+#a11y-panel code,
+#a11y-panel del,
+#a11y-panel dfn,
+#a11y-panel em,
+#a11y-panel img,
+#a11y-panel ins,
+#a11y-panel kbd,
+#a11y-panel q,
+#a11y-panel s,
+#a11y-panel samp,
+#a11y-panel small,
+#a11y-panel strike,
+#a11y-panel strong,
+#a11y-panel sub,
+#a11y-panel sup,
+#a11y-panel tt,
+#a11y-panel var,
+#a11y-panel b,
+#a11y-panel u,
+#a11y-panel i,
+#a11y-panel center,
+#a11y-panel dl,
+#a11y-panel dt,
+#a11y-panel dd,
+#a11y-panel ol,
+#a11y-panel ul,
+#a11y-panel li,
+#a11y-panel fieldset,
+#a11y-panel form,
+#a11y-panel label,
+#a11y-panel legend,
+#a11y-panel table,
+#a11y-panel caption,
+#a11y-panel tbody,
+#a11y-panel tfoot,
+#a11y-panel thead,
+#a11y-panel tr,
+#a11y-panel th,
+#a11y-panel td,
+#a11y-panel article,
+#a11y-panel aside,
+#a11y-panel canvas,
+#a11y-panel details,
+#a11y-panel embed,
+#a11y-panel figure,
+#a11y-panel figcaption,
+#a11y-panel footer,
+#a11y-panel header,
+#a11y-panel hgroup,
+#a11y-panel menu,
+#a11y-panel nav,
+#a11y-panel output,
+#a11y-panel ruby,
+#a11y-panel section,
+#a11y-panel summary,
+#a11y-panel time,
+#a11y-panel mark,
+#a11y-panel audio,
+#a11y-panel video {
+   background: none;
+   border: 0;
    box-sizing: border-box;
+   color: #000;
    font-weight: normal;
    font-size: 16px;
    font-family: times, serif;
    line-height: 1.2em;
-   color: #000;
-   padding: 0;
    margin: 0;
-   border: 0;
-   background: none;
+   padding: 0;
    position: static;
+   vertical-align: baseline;
 }
+#a11y-panel ol, #a11y-panel ul,
+#a11y-panel ol li, #a11y-panel ul li {
+   list-style: none;
+   list-style-image: none;
+}
+#a11y-panel blockquote, q {
+   quotes: none;
+}
+#a11y-panel blockquote:before, #a11y-panel blockquote:after,
+#a11y-panel q:before, #a11y-panel q:after {
+	content: '';
+	content: none;
+}
+#a11y-panel table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
 #a11y-panel {
    position: absolute;
    top: 10px;
@@ -26,8 +124,11 @@
    box-shadow: 2px 2px 4px #999;
 }
 #a11y-panel:focus {
-   outline: none;
+   outline: none !important;
    border-color: #07d;
+}
+#a11y-panel *:focus {
+   outline: none !important;
 }
 #a11y-panel .a11y-title {
    padding: 10px 0;
@@ -152,7 +253,8 @@
 #a11y-panel .a11y-summary-tab:focus {
    background-color: #fff;
 }
-#a11y-panel .a11y-summary-panel {
+#a11y-panel .a11y-results-panel {
+   position: relative;
    width: 100%;
    background-color: #fff;
 }
@@ -255,6 +357,7 @@
    width: calc(100% - 6px);
    border-collapse: collapse;
    border-top: 1px solid #666;
+   table-layout: fixed;
 }
 #a11y-panel .a11y-results-table caption {
    width: 1px;
@@ -300,10 +403,6 @@
    padding: 0.5em 0 0 0.5em;
    margin: 0 0 1em 0;
 }
-#a11y-panel .a11y-elementresults {
-   width: 100%;
-   position: relative;
-}
 #a11y-panel .a11y-elementhdg {
    display: block;
    margin: 0.5em 0.25em;
@@ -317,7 +416,7 @@
 }
 #a11y-panel .a11y-backbtn {
    position: absolute;
-   top: -5px;
+   top: 5px;
    left: 3px;
    width: 30px;
    height: 30px;
@@ -328,13 +427,23 @@
    text-align: center;
    font-size: 0.8em;
 }
-#a11y-panel .a11y-elementresults table {
-   table-layout: fixed;
+#a11y-panel #a11y-elementresults {
+   height: 300px;
+   overflow: auto;
+   margin-bottom: 0.5em;
 }
-#a11y-panel .a11y-elementresults td {
+#a11y-panel #a11y-elementresults td {
    overflow: hidden;
    text-overflow: ellipsis;
    white-space: nowrap;
+}
+#a11y-panel #a11y-elementresults:after  {
+   content: ' ';
+   display: block;
+   width: 100%;
+   height: 1px;
+   border-top: 1px solid #666;
+   margin-bottom: 1em;
 }
 #a11y-panel [role=gridcell]:hover,
 #a11y-panel [role=gridcell]:focus,
@@ -349,6 +458,7 @@
    z-index: 10000;
    border: 2px solid #f00;
 }
-[aria-hidden=true] {
+#a11y-panel[aria-hidden=true],
+#a11y-panel [aria-hidden=true] {
    display: none;
 }

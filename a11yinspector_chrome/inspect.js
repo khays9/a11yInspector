@@ -79,7 +79,7 @@ var a11yInspector = {
       'Passes': 3,
       'N/A': 4
    }),
-   $summaryViews: $(),
+   $summaryViews: jQuery(),
    bShowViolations: true,
    bShowWarnings: true,
    bShowManualChecks: true,
@@ -103,8 +103,8 @@ a11yInspector.init = function() {
    this.doc = window.document;
    this.url = window.location.href;
    this.viewSize = {
-      height: $(window).height(),
-      width: $(window).width()
+      height: jQuery(window).height(),
+      width: jQuery(window).width()
    };
 
    // Configure evaluator parameters
@@ -122,7 +122,11 @@ a11yInspector.init = function() {
    this.buildPanel();
   
    // Add and event handler to detect window resize
-   $(window).on('resize.a11y', function() {
+   jQuery(window).on('resize.a11y', function() {
+      thisObj.handleResize();
+      return true;
+   })
+   .on('scroll', function(e) {
       thisObj.handleResize();
       return true;
    });
@@ -241,38 +245,39 @@ a11yInspector.getRuleGroupConst = function (viewIndex) {
 a11yInspector.buildPanel = function () {
    var thisObj = this;
 
-   this.$panel = $('<div>')
+   this.$panel = jQuery('<div>')
       .attr({
          'id': 'a11y-panel',
          'role': 'dialog',
          'aria-label': 'a11y inspector',
          'tabindex': '0'
       })
-      .css('top', ($(document).scrollTop() + 10) + 'px')
+      .css('top', (jQuery(document).scrollTop() + 10) + 'px');
+
+   this.$title = jQuery('<h2>')
+      .text('a11yINSPECTOR')
+      .addClass('a11y-title')
+      .appendTo(this.$panel)
       .on('mousedown', function(e) {
          thisObj.clickPos = {
             x: e.pageX - thisObj.$panel.offset().left,
             y: e.pageY - thisObj.$panel.offset().top
          };
 
-         $(document).on('mousemove.a11y', function(e) {
+         jQuery(document).on('mousemove.a11y', function(e) {
             thisObj.handleDrag(e);
             return false;
          })
          .on('mouseup.a11y', function() {
-            $(document).off('mousemove.a11y');
+            jQuery(document).off('mousemove.a11y');
             return false;
          });
 
          return false;
       });
 
-   this.$title = $('<h2>')
-      .text('a11yINSPECTOR')
-      .addClass('a11y-title')
-      .appendTo(this.$panel);
 
-   this.$bnClose = $('<div>')
+   this.$bnClose = jQuery('<div>')
       .attr({
          'role': 'button',
          'aria-label': 'Dismiss',
@@ -295,27 +300,36 @@ a11yInspector.buildPanel = function () {
    this.addFilterButtonsToPanel();
    this.buildSummaryTabpanel();
 
-   $('body').prepend(this.$panel)
+   this.$elementResultsPanel = jQuery('<div>')
+      .attr({
+         'role': 'region',
+         'aria-label': 'Element Results',
+         'aria-hidden': 'true',
+         'id': 'a11y-elementresults'
+      })
+      .addClass('a11y-results-panel')
+      .appendTo(this.$panel);
 
-   this.$hlContainer = $('<div>')
+   jQuery('body').prepend(this.$panel)
+
+   this.$hlContainer = jQuery('<div>')
       .attr('id', 'a11y-hlcontainer');
 
-   $('body').prepend(this.$hlContainer);
-
+   jQuery('body').prepend(this.$hlContainer);
 };
 a11yInspector.destroyPanel = function() {
    this.$panel.remove();
    this.$hlContainer.remove();
-   this.$hlContainer = $();
-   this.$panel = $();
-   this.$title = $();
-   this.$bnClose = $();
-   this.$summary = $();
-   this.$filters = $();
-   this.$summaryTablist = $();
-   this.$summaryTabs = $();
-   this.$summaryPanels = $();
-   this.$summaryViews = $();
+   this.$hlContainer = jQuery();
+   this.$panel = jQuery();
+   this.$title = jQuery();
+   this.$bnClose = jQuery();
+   this.$summary = jQuery();
+   this.$filters = jQuery();
+   this.$summaryTablist = jQuery();
+   this.$summaryTabs = jQuery();
+   this.$summaryPanels = jQuery();
+   this.$summaryViews = jQuery();
    this.bShowViolations = true;
    this.bShowWarnings = true;
    this.bShowManualChecks = true;
@@ -325,14 +339,14 @@ a11yInspector.addFilterButtonsToPanel = function () {
    var evalSummary = this.groupResults[0].rule_results_summary;
    var thisObj = this;
 
-   this.$summary = $('<div>')
+   this.$summary = jQuery('<div>')
       .attr({
          'role': 'menubar',
          'aria-label': 'Result Filter'
       })
       .addClass('a11y-summary');
 
-   this.$filters = $('<div>')
+   this.$filters = jQuery('<div>')
       .attr({
          'role': 'menuitemcheckbox',
          'tabindex': '0',
@@ -342,14 +356,14 @@ a11yInspector.addFilterButtonsToPanel = function () {
       .html('Violations: <br>' + evalSummary.violations)
       .appendTo(this.$summary)
       .on('click', function() {
-         thisObj.toggleChecked($(this));
+         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowViolations = !thisObj.bShowViolations;
          thisObj.populateSummary();
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked($(this));
+            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowViolations = !thisObj.bShowViolations;
             thisObj.populateSummary();
             return false;
@@ -358,7 +372,7 @@ a11yInspector.addFilterButtonsToPanel = function () {
       });
 
 
-   var $btn = $('<div>')
+   var $btn = jQuery('<div>')
       .attr({
          'role': 'menuitemcheckbox',
          'tabindex': '0',
@@ -368,14 +382,14 @@ a11yInspector.addFilterButtonsToPanel = function () {
       .html('Warnings: <br>' + evalSummary.warnings)
       .appendTo(this.$summary)
       .on('click', function() {
-         thisObj.toggleChecked($(this));
+         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowWarnings = !thisObj.bShowWarnings;
          thisObj.populateSummary();
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked($(this));
+            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowWarnings = !thisObj.bShowWarnings;
             thisObj.populateSummary();
             return false;
@@ -385,7 +399,7 @@ a11yInspector.addFilterButtonsToPanel = function () {
 
    this.$filters = this.$filters.add($btn);
 
-   $btn = $('<div>')
+   $btn = jQuery('<div>')
       .attr({
          'role': 'menuitemcheckbox',
          'tabindex': '0',
@@ -395,14 +409,14 @@ a11yInspector.addFilterButtonsToPanel = function () {
       .html('Manual Checks: <br>' + evalSummary.manual_checks)
       .appendTo(this.$summary)
       .on('click', function() {
-         thisObj.toggleChecked($(this));
+         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowManualChecks = !thisObj.bShowManualChecks;
          thisObj.populateSummary();
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked($(this));
+            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowManualChecks = !thisObj.bShowManualChecks;
             thisObj.populateSummary();
             return false;
@@ -418,14 +432,14 @@ a11yInspector.addFilterButtonsToPanel = function () {
 a11yInspector.buildSummaryTabpanel = function() {
    var thisObj = this;
 
-   this.$summaryTablist = $('<ul>')
+   this.$summaryTablist = jQuery('<ul>')
       .attr({
          'role': 'tablist',
          'aria-label': 'Summary View'
       })
       .addClass('a11y-viewtabs');
 
-   this.$summaryTabs = $('<li>')
+   this.$summaryTabs = jQuery('<li>')
       .attr({
          'role': 'tab',
          'aria-selected': 'true',
@@ -435,7 +449,7 @@ a11yInspector.buildSummaryTabpanel = function() {
       .text('Categories')
       .addClass('a11y-summary-tab');
 
-   var $tab = $('<li>')
+   var $tab = jQuery('<li>')
       .attr({
          'role': 'tab',
          'aria-selected': 'false',
@@ -449,17 +463,17 @@ a11yInspector.buildSummaryTabpanel = function() {
 
    // Add event handlers
    this.$summaryTabs.on('click', function() {
-      thisObj.selectTab($(this));
+      thisObj.selectTab(jQuery(this));
       return false;
    })
    .on('keydown', function(e) {
       switch(e.which) {
          case thisObj.keys.left: {
-            thisObj.moveToPrevTab(thisObj.$summaryTabs, $(this));
+            thisObj.moveToPrevTab(thisObj.$summaryTabs, jQuery(this));
             return false;
          }
          case thisObj.keys.right: {
-            thisObj.moveToNextTab(thisObj.$summaryTabs, $(this));
+            thisObj.moveToNextTab(thisObj.$summaryTabs, jQuery(this));
             return false;
          }
       }
@@ -470,23 +484,24 @@ a11yInspector.buildSummaryTabpanel = function() {
    this.$summaryTablist.append(this.$summaryTabs);
    this.$panel.append(this.$summaryTablist);
 
-   this.$summaryPanels = $('<div>')
+   this.$summaryPanels = jQuery('<div>')
       .attr({
          'role': 'tabpanel',
          'id': 'a11y-category-panel',
          'aria-hidden': 'false'
       })
-      .addClass('a11y-summary-panel');
+      .addClass('a11y-results-panel');
 
-   var $panel = $('<div>')
+   var $panel = jQuery('<div>')
       .attr({
          'role': 'tabpanel',
          'id': 'a11y-wcag-panel',
          'aria-hidden': 'true'
       })
-      .addClass('a11y-summary-panel');
+      .addClass('a11y-results-panel');
 
    this.$summaryPanels = this.$summaryPanels.add($panel);
+
 
    this.populateSummary();
 
@@ -496,16 +511,17 @@ a11yInspector.buildSummaryTabpanel = function() {
 a11yInspector.populateSummary = function() {
    var thisObj = this;
    var $view;
+   var bWCAG = false;
 
    if (!this.$summaryViews.length) {
-      this.$summaryViews = $('<ul>')
+      this.$summaryViews = jQuery('<ul>')
          .attr({
             'role': 'group',
             'aria-label': 'Category List'
          })
          .addClass('a11y-summary-list');
 
-      $view = $('<ul>')
+      $view = jQuery('<ul>')
          .attr({
             'role': 'group',
             'aria-label': 'WCAG List'
@@ -552,17 +568,18 @@ a11yInspector.populateSummary = function() {
       if (ndx > this.viewEnum.ALL_RULES) {
          // WCAG rule groups follow category groups
          $view = this.$summaryViews.eq(summaryViewEnum.WCAG);
+         bWCAG = true;
       }
 
-      var $li = $('<li>')
+      var $li = jQuery('<li>')
          .attr('role', 'presentation')
          .addClass('a11y-summarylist-accordian');
 
-      var $heading = $('<h3>');
+      var $heading = jQuery('<h3>');
 
       $li.append($heading);
 
-      var $accordian = $('<div>')
+      var $accordian = jQuery('<div>')
          .attr({
             'role': 'button',
             'id': 'accordian-' + ndx,
@@ -574,7 +591,7 @@ a11yInspector.populateSummary = function() {
          .addClass('a11y-summarylist-button')
          .text(this.groupResults[ndx].rule_group_information.title) // retrieve title from OAA library
          .on('click', function() {
-            thisObj.toggleAccordian($(this));
+            thisObj.toggleAccordian(jQuery(this));
             return false;
          })
          .on('keydown', function(e) {
@@ -585,27 +602,27 @@ a11yInspector.populateSummary = function() {
 
 
       // Create and add result totals to the category heading
-      var $totals = $('<ul>')
+      var $totals = jQuery('<ul>')
          .attr('id', 'a11y-result-totals-' + ndx);
 
       var $totalLI;
 
       if (this.bShowViolations) {
-         $totalLI = $('<li>')
+         $totalLI = jQuery('<li>')
             .html('<span aria-label="' + resultCount.v + ' violation' + ((resultCount.v !== 1) ? 's' : '') + '.">V: ' + resultCount.v + '</span>')
             .addClass('a11y-total-violations');
          $totals.append($totalLI);
       }
 
       if (this.bShowWarnings) {
-         $totalLI = $('<li>')
+         $totalLI = jQuery('<li>')
             .html('<span aria-label="' + resultCount.w + ' warning' + ((resultCount.w !== 1) ? 's' : '') + '.">W: ' + resultCount.w + '</span>')
             .addClass('a11y-total-warnings');
          $totals.append($totalLI);
       }
 
       if (this.bShowManualChecks) {
-         $totalLI = $('<li>')
+         $totalLI = jQuery('<li>')
             .html('<span aria-label="' + resultCount.mc + ' manual checks' + ((resultCount.mc !== 1) ? 's' : '') + '.">MC: ' + resultCount.mc + '</span>')
             .addClass('a11y-total-manualchecks');
          $totals.append($totalLI);
@@ -614,14 +631,14 @@ a11yInspector.populateSummary = function() {
       $li.append($totals);
 
       // Add arrows to the heading as a visual cue that it is expandable
-      var $arrow = $('<div>').addClass('a11y-expand-arrow');
+      var $arrow = jQuery('<div>').addClass('a11y-expand-arrow');
       $accordian.append($arrow);
 
 
       // Create and add the accordian panel for this category
-      var $panelOuter = $('<div>').attr('role', 'document');
+      var $panelOuter = jQuery('<div>').attr('role', 'document');
 
-      var $panel = $('<div>')
+      var $panel = jQuery('<div>')
          .attr({
             'role': 'region',
             'id': 'a11y-summary-accordian-panel' + ndx,
@@ -632,17 +649,8 @@ a11yInspector.populateSummary = function() {
          .addClass('a11y-summarylist-panel')
          .appendTo($panelOuter);
 
-      thisObj.populateResults(ndx, $panel);
+      thisObj.populateResults(ndx, $panel, bWCAG);
 
-      var $elementResults = $('<div>')
-         .attr({
-            'aria-hidden': 'true',
-            'id': 'a11y-elementresults-' + ndx,
-            'aria-labelledby': 'a11y-elementresults-hdg' + ndx
-         })
-         .addClass('a11y-elementresults');
-
-      $panel.append($elementResults);
 
       $li.append($panelOuter);
 
@@ -657,22 +665,22 @@ a11yInspector.populateSummary = function() {
  *    group: the index of the current rule result group
  *    $panel: The accordian panel to populate
  */
-a11yInspector.populateResults = function(groupNdx, $panel) {
+a11yInspector.populateResults = function(groupNdx, $panel, bWCAG) {
    var thisObj = this;
    var results = this.groupResults[groupNdx];
 
-   var $resultsWrap = $('<div>')
+   var $resultsWrap = jQuery('<div>')
       .attr('id', 'a11y-ruleresults-' + groupNdx)
       .addClass('a11y-results');
 
-   var $desc = $('<p>')
+   var $desc = jQuery('<p>')
       .addClass('a11y-results-desc')
       .text(results.rule_group_information.description);
 
 
    $resultsWrap.append('<p id="a11y-results-cue">Click on a rule to view element results.</p>');
 
-   var $table = $('<table>')
+   var $table = jQuery('<table>')
       .attr({
          'role': 'grid',
          'aria-readonly': 'true'
@@ -701,46 +709,44 @@ a11yInspector.populateResults = function(groupNdx, $panel) {
          continue;
       }
 
-      var $tr = $('<tr>');
+      var $tr = jQuery('<tr>');
 
-      var $td = $('<td>')
+      var $td = jQuery('<td>')
          .attr({
             'role': 'gridcell',
             'aria-expanded': 'false',
-            'aria-controls': 'a11y-ruleresults-' + groupNdx + ' a11y-elementresults-' + groupNdx,
+            'aria-controls': (!bWCAG ? 'a11y-category-panel' : 'a11y-wcag-panel') + ' a11y-elementresults',
             'tabindex': '0',
             'data-rulendx': ndx
          })
          .text(rule.getRuleSummary())
          .appendTo($tr)
          .on('click', function() {
-            var ruleNdx = $(this).data('rulendx');
-            thisObj.showElementResults($(this), results.rule_results[ruleNdx]);
+            var ruleNdx = jQuery(this).data('rulendx');
+            thisObj.showElementResults(jQuery(this), results.rule_results[ruleNdx]);
             return false;
          })
          .on('keydown', function(e) {
             switch (e.which) {
                   case thisObj.keys.enter:
                   case thisObj.keys.space: {
-                     var ruleNdx = $(this).data('rulendx');
-                     thisObj.showElementResults($(this), results.rule_results[ruleNdx]);
+                     var ruleNdx = jQuery(this).data('rulendx');
+                     thisObj.showElementResults(jQuery(this), results.rule_results[ruleNdx]);
                      return false;
                   }
             }
             return true;
          });
 
-      $td = $('<td>')
+      $td = jQuery('<td>')
          .attr({
             'role': 'gridcell',
             'tabindex': '-1'
          });
 
-      //if (rule.element_results_summary.violations) {
       if (ruleType === resultVal.VIOLATION) {
          $td.html('<span aria-label="Violation">V</span>');
       }
-      //else if (rule.element_results_summary.warnings) {
       else if (ruleType === resultVal.WARNING) {
          $td.html('<span aria-label="Warning">W</span>');
       }
@@ -786,10 +792,10 @@ a11yInspector.selectTab = function($tab) {
       'tabindex': '-1'
       })
       .each(function() {
-         $('#' + $(this).attr('aria-controls')).attr('aria-hidden', 'true');
+         jQuery('#' + jQuery(this).attr('aria-controls')).attr('aria-hidden', 'true');
       });
 
-   $('#' + $tab.attr('aria-controls')).attr('aria-hidden', 'false');
+   jQuery('#' + $tab.attr('aria-controls')).attr('aria-hidden', 'false');
    $tab.attr({
       'aria-selected': 'true',
       'tabindex': '0'
@@ -800,18 +806,18 @@ a11yInspector.selectTab = function($tab) {
  */
 a11yInspector.closeAccordian = function($accordian) {
       $accordian.attr('aria-expanded', 'false');
-      $('#' + $accordian.attr('aria-controls')).attr('aria-hidden', 'true');
+      jQuery('#' + $accordian.attr('aria-controls')).attr('aria-hidden', 'true');
 };
 a11yInspector.openAccordian = function($accordian) {
       $accordian.attr('aria-expanded', 'true');
-      $('#' + $accordian.attr('aria-controls')).attr('aria-hidden', 'false');
+      jQuery('#' + $accordian.attr('aria-controls')).attr('aria-hidden', 'false');
 };
 a11yInspector.toggleAccordian = function($accordian) {
    var $siblings = $accordian.parentsUntil('ul').last().parent().find('.a11y-summarylist-button').not($accordian);
    var thisObj = this;
 
    $siblings.each(function() {
-      var $btn = $(this);
+      var $btn = jQuery(this);
 
       thisObj.closeAccordian($btn);
    });
@@ -825,7 +831,7 @@ a11yInspector.toggleAccordian = function($accordian) {
    
 };
 a11yInspector.handleAccordianKeydown = function(e) {
-   var $btn = $(e.target);
+   var $btn = jQuery(e.target);
    var $newBtn;
    var $accordians = $btn.parentsUntil('ul').last().parent().find('.a11y-summarylist-button');
    var btnIndex = $accordians.index($btn);
@@ -860,8 +866,8 @@ a11yInspector.handleAccordianKeydown = function(e) {
 a11yInspector.showElementResults = function($trigger, rule) {
 
    var $controls = $trigger.attr('aria-controls').split(' ');
-   var $rulesPanel = $('#' + $controls[0]);
-   var $elementPanel = $('#' + $controls[1]);
+   var $rulesPanel = jQuery('#' + $controls[0]);
+   var $elementPanel = jQuery('#' + $controls[1]);
 
    this.populateElementResults($elementPanel, $rulesPanel, $trigger, rule);
 
@@ -889,7 +895,6 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
    if (ruleType === resultVal.VIOLATION) {
       ruleTypeVal = 'V';
    }
-   //else if (rule.element_results_summary.warnings) {
    else if (ruleType === resultVal.WARNING) {
       ruleTypeVal = 'W';
    }
@@ -897,7 +902,7 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
       ruleTypeVal = 'MC';
    }
 
-   var $backBtn = $('<div>')
+   var $backBtn = jQuery('<div>')
       .addClass('a11y-backbtn')
       .attr({
          'role': 'button',
@@ -939,7 +944,7 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
       }
    }
 
-   var $resultsTable = $('<table>')
+   var $resultsTable = jQuery('<table>')
       .attr({
          'role': 'grid',
          'aria-readonly': 'true'
@@ -950,38 +955,42 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
    for (var ndx = 0; ndx < ruleObj.length; ndx++) {
       var element = ruleObj[ndx];
 
-      var $tr = $('<tr>');
+      var $tr = jQuery('<tr>');
+      /*
+      var styleFunc = element.cache_item.getStyle;
 
-      var $td = $('<td>')
+      if (!styleFunc) {
+         styleFunc = element.cache_item.dom_element.getStyle;
+      }
+      */
+
+      var $td = jQuery('<td>')
          .attr({
             'role': 'gridcell',
             //'aria-controls': 'a11y-ruleresults-' + groupNdx + ' a11y-elementresults-' + groupNdx,
             'tabindex': '0',
             'title': element.element_identifier,
-            'data-elementndx': ndx,
-            'data-left': element.cache_item.getStyle()[14].value,
-            'data-top': element.cache_item.getStyle()[15].value,
-            'data-width': element.cache_item.getStyle()[16].value,
-            'data-height': element.cache_item.getStyle()[17].value
          })
+         .data('elem', element.getDOMElement())
          .text(element.element_identifier)
          .appendTo($tr)
          .on('click', function() {
 
-            thisObj.handleOverlay($(this));
+            thisObj.handleOverlay(jQuery(this));
             return false;
          })
          .on('keydown', function(e) {
             switch (e.which) {
                case thisObj.keys.enter:
                case thisObj.keys.space: {
+                  thisObj.handleOverlay(jQuery(this));
                   return false;
                }
             }
             return true;
          });
 
-      $td = $('<td>')
+      $td = jQuery('<td>')
          .attr({
             'role': 'gridcell',
             'tabindex': '-1'
@@ -998,25 +1007,43 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
 
 a11yInspector.handleOverlay = function($elem) {
 
-   var elemTop = $elem.data('top');
-   var elemLeft = $elem.data('left');
-   var elemWidth = $elem.data('width');
-   var elemHeight = $elem.data('height');
-   var scrollTop = $(document).scrollTop();
+   var dom_element = $elem.data('elem');
+   var style = dom_element.computed_style;
+   var VISIBILITY = OpenAjax.a11y.VISIBILITY;
+   var scrollTop = jQuery(document).scrollTop();
 
-   if (elemTop < 0) {
-      return;
+   if (dom_element.node) {
+      switch (style.is_visible_onscreen) {
+         case VISIBILITY.VISIBLE: {
+            break;
+         }
+         case VISIBILITY.HIDDEN: {
+            // TO DO: Create an overlay for hidden items
+            return;
+         }
+         case VISIBILITY.UNKNOWN: {
+            return;
+         }
+      }
    }
+   else {
+      console.log('no node');
+   }
+
+   var elemTop = style.top;
+   var elemLeft = style.left;
+   var elemWidth = style.width;
+   var elemHeight = style.height;
 
    this.$hlContainer.empty();
 
-   $('<div>')
+   $hl = jQuery('<div>')
       .addClass('a11y-elem-hl')
       .css({
-         'top': (elemTop - 1) + 'px',
-         'left': (elemLeft - 1) + 'px',
-         'width': (elemWidth + 2)  + 'px',
-         'height': (elemHeight + 2) + 'px'
+         'top': elemTop + 'px',
+         'left': elemLeft + 'px',
+         'width': elemWidth  + 'px',
+         'height': elemHeight + 'px'
       })
       .appendTo(this.$hlContainer);
 
@@ -1027,7 +1054,7 @@ a11yInspector.handleOverlay = function($elem) {
          this.$panel.css('top', (elemTop + 10) + 'px');
       }
       else {
-         this.$panel.css('top', ($(document).scrollTop() + 10) + 'px');
+         this.$panel.css('top', (jQuery(document).scrollTop() + 10) + 'px');
       }
    }
 };
@@ -1042,8 +1069,8 @@ a11yInspector.toggleChecked = function($btn) {
 a11yInspector.handleDrag = function(e) {
 
    var docScroll = {
-      left: $(document).scrollLeft(),
-      top: $(document).scrollTop()
+      left: jQuery(document).scrollLeft(),
+      top: jQuery(document).scrollTop()
    };
 
    var newPos = {
@@ -1073,14 +1100,14 @@ a11yInspector.handleDrag = function(e) {
 a11yInspector.handleResize = function() {
 
    var docScroll = {
-      left: $(document).scrollLeft(),
-      top: $(document).scrollTop()
+      left: jQuery(document).scrollLeft(),
+      top: jQuery(document).scrollTop()
    };
 
    // redefine the stored viewSize
    this.viewSize = {
-      width: $(window).width(),
-      height: $(window).height()
+      width: jQuery(window).width(),
+      height: jQuery(window).height()
    };
 
    // Check that the panel is still on screen
@@ -1101,5 +1128,9 @@ a11yInspector.handleResize = function() {
       }
 
       this.$panel.css('top', newPos + 'px');
+
+   }
+   else if(panelPos.top < (docScroll.top + 10)) {
+      this.$panel.css('top', (docScroll.top + 10) + 'px');
    }
 };
