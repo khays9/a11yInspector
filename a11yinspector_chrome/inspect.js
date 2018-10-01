@@ -79,7 +79,11 @@ var a11yInspector = {
       'Passes': 3,
       'N/A': 4
    }),
+   $panel: jQuery(),
+   $filters: jQuery(),
    $summaryViews: jQuery(),
+   $summaryTabs: jQuery(),
+   $elementResultsPanel: jQuery(),
    bShowViolations: true,
    bShowWarnings: true,
    bShowManualChecks: true,
@@ -107,6 +111,8 @@ a11yInspector.init = function() {
       width: jQuery(window).width()
    };
 
+   this.bPanelVisible = false;
+
    // Configure evaluator parameters
    this.evalFactory.setParameter('ruleset', OpenAjax.a11y.RulesetManager.getRuleset('ARIA_STRICT'));
    this.evalFactory.setFeature('eventProcessing', this.eventMode);
@@ -114,6 +120,8 @@ a11yInspector.init = function() {
 
    // Get the evaluator
    this.evaluator = this.evalFactory.newEvaluator();
+
+   this.$hlElem = $();
 
    this.bInitialized = true;
 
@@ -133,9 +141,45 @@ a11yInspector.init = function() {
 };
 
 a11yInspector.evaluate = function() {
-   this.evalResult = a11yInspector.evaluator.evaluate(this.doc, this.doc.title, this.url);
+   this.evalResult = this.evaluator.evaluate(this.doc, this.doc.title, this.url);
    this.bNewEval = true;
    this.storeResultsByGroup();
+};
+
+a11yInspector.reevaluate = function() {
+
+   // Remove the panel from the page so it's markup does not skew the evaluation results
+   this.$panel.detach();
+
+   // Get new instance of the evaluator
+   this.evalFactory = OpenAjax.a11y.EvaluatorFactory.newInstance(),
+
+   // ReConfigure evaluator parameters
+   this.evalFactory.setParameter('ruleset', OpenAjax.a11y.RulesetManager.getRuleset('ARIA_STRICT'));
+   this.evalFactory.setFeature('eventProcessing', this.eventMode);
+   this.evalFactory.setFeature('brokenLinkTesting', false);
+
+   // Get a new instance of the evaluator
+   this.evaluator = this.evalFactory.newEvaluator();
+
+   // Run the Evaluation
+   this.evalResult = this.evaluator.evaluate(this.doc, this.doc.title, this.url);
+
+   this.bNewEval = false;
+   this.storeResultsByGroup();
+
+   // Update the panel
+   this.updatePanel();
+
+   // Reinsert the panel into the page
+   this.$panel.prependTo('body');
+
+   // Make the summary results visible
+   var $activeTab = this.$panel.find('.a11y-summary-tab[aria-selected=true]');
+   jQuery('#' + $activeTab.attr('aria-controls')).attr('aria-hidden', 'false');
+
+   // Return focus to the re-evaluate button
+   this.$bnRerun.focus();
 };
 
 a11yInspector.storeResultsByGroup = function() {
@@ -152,7 +196,6 @@ a11yInspector.storeResultsByGroup = function() {
          evalResult.getRuleResultsByGuideline(groupConst) :
          evalResult.getRuleResultsByCategory(groupConst);
    }
-
 };
 
 a11yInspector.getRuleGroupConst = function (viewIndex) {
@@ -254,7 +297,7 @@ a11yInspector.buildPanel = function () {
       })
       .css('top', (jQuery(document).scrollTop() + 10) + 'px');
 
-   this.$title = jQuery('<h2>')
+   var $title = jQuery('<h2>')
       .text('a11yINSPECTOR')
       .addClass('a11y-title')
       .appendTo(this.$panel)
@@ -276,8 +319,28 @@ a11yInspector.buildPanel = function () {
          return false;
       });
 
+   this.$bnRerun = jQuery('<div>')
+      .attr({
+         'role': 'button',
+         'aria-label': 'Reevaluate',
+         'tabindex': '0'
+      })
+      .html('<svg aria-hidden="true" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 30 30" style="enable-background:new 0 0 30 30;" xml:space="preserve"> <g> <path d="M23.7,7.9C24.8,7.2,25.9,6.6,27,6c0,3.7,0,7.3,0,11c-3.2-1.8-6.3-3.6-9.5-5.5c1-0.6,2-1.2,3-1.8c-1.2-1.7-4.3-3.3-7.7-2.5 C9.2,8,6.5,11.3,6.6,15.1c0,2.2,0.8,4,2.4,5.6c1.5,1.5,3.4,2.3,5.6,2.3c0,1.2,0,2.4,0,3.5c-4,0.1-8.8-2.4-10.8-7.4 c-1.9-5-0.1-10.7,4.4-13.8c2.5-1.7,5.3-2.3,8.3-1.8C19.4,4.1,21.8,5.5,23.7,7.9z"/> </g> </svg>')
+      .addClass('a11y-rerun')
+      .prependTo(this.$panel)
+      .on('click', function() {
+         thisObj.reevaluate();
+         return false;
+      })
+      .on('keydown', function(e) {
+         if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
+            thisObj.reevaluate();
+            return false;
+         }
+         return true;
+      });
 
-   this.$bnClose = jQuery('<div>')
+   var $bnClose = jQuery('<div>')
       .attr({
          'role': 'button',
          'aria-label': 'Dismiss',
@@ -289,7 +352,7 @@ a11yInspector.buildPanel = function () {
          thisObj.destroyPanel();
          return false;
       })
-      .on('keydown', function() {
+      .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
             thisObj.destroyPanel();
             return false;
@@ -310,28 +373,50 @@ a11yInspector.buildPanel = function () {
       .addClass('a11y-results-panel')
       .appendTo(this.$panel);
 
-   jQuery('body').prepend(this.$panel)
+   jQuery('body').prepend(this.$panel);
 
    this.$hlContainer = jQuery('<div>')
       .attr('id', 'a11y-hlcontainer');
 
    jQuery('body').prepend(this.$hlContainer);
+
+   this.bPanelVisible = true;
 };
 a11yInspector.destroyPanel = function() {
    this.$panel.remove();
    this.$hlContainer.remove();
    this.$hlContainer = jQuery();
    this.$panel = jQuery();
-   this.$title = jQuery();
-   this.$bnClose = jQuery();
-   this.$summary = jQuery();
    this.$filters = jQuery();
-   this.$summaryTablist = jQuery();
    this.$summaryTabs = jQuery();
    this.$summaryPanels = jQuery();
    this.$summaryViews = jQuery();
    this.bShowViolations = true;
    this.bShowWarnings = true;
+   this.bShowManualChecks = true;
+   this.bPanelVisible = false;
+};
+a11yInspector.updatePanel = function() {
+   this.$hlContainer.empty();
+   this.$hlElem = $();
+   this.hideAllElementResults();
+   this.updateFilterButtons();
+   this.populateSummaryViews();
+
+};
+a11yInspector.updateFilterButtons = function() {
+   var evalSummary = this.groupResults[0].rule_results_summary;
+
+   this.$filters.eq(0).html('Violations: <br>' + evalSummary.violations)
+      .attr('aria-checked', 'true');
+   this.bShowViolations = true;
+
+   this.$filters.eq(1).html('Warnings: <br>' + evalSummary.warnings)
+      .attr('aria-checked', 'true');
+   this.bShowWarnings = true;
+
+   this.$filters.eq(2).html('Manual Checks: <br>' + evalSummary.manual_checks)
+      .attr('aria-checked', 'true');
    this.bShowManualChecks = true;
 };
 
@@ -339,7 +424,7 @@ a11yInspector.addFilterButtonsToPanel = function () {
    var evalSummary = this.groupResults[0].rule_results_summary;
    var thisObj = this;
 
-   this.$summary = jQuery('<div>')
+    var $summary = jQuery('<div>')
       .attr({
          'role': 'menubar',
          'aria-label': 'Result Filter'
@@ -354,25 +439,23 @@ a11yInspector.addFilterButtonsToPanel = function () {
       })
       .addClass('a11y-filter-button a11y-filter-violations')
       .html('Violations: <br>' + evalSummary.violations)
-      .appendTo(this.$summary)
+      .appendTo($summary)
       .on('click', function() {
-         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowViolations = !thisObj.bShowViolations;
-         thisObj.populateSummary();
+         thisObj.toggleFilter(jQuery(this));
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowViolations = !thisObj.bShowViolations;
-            thisObj.populateSummary();
+            thisObj.toggleFilter(jQuery(this));
             return false;
          }
          return true;
       });
 
 
-   var $btn = jQuery('<div>')
+   $btn = jQuery('<div>')
       .attr({
          'role': 'menuitemcheckbox',
          'tabindex': '0',
@@ -380,18 +463,16 @@ a11yInspector.addFilterButtonsToPanel = function () {
       })
       .addClass('a11y-filter-button a11y-filter-warnings')
       .html('Warnings: <br>' + evalSummary.warnings)
-      .appendTo(this.$summary)
+      .appendTo($summary)
       .on('click', function() {
-         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowWarnings = !thisObj.bShowWarnings;
-         thisObj.populateSummary();
+         thisObj.toggleFilter(jQuery(this));
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowWarnings = !thisObj.bShowWarnings;
-            thisObj.populateSummary();
+            thisObj.toggleFilter(jQuery(this));
             return false;
          }
          return true;
@@ -407,18 +488,16 @@ a11yInspector.addFilterButtonsToPanel = function () {
       })
       .addClass('a11y-filter-button a11y-filter-manualchecks')
       .html('Manual Checks: <br>' + evalSummary.manual_checks)
-      .appendTo(this.$summary)
+      .appendTo($summary)
       .on('click', function() {
-         thisObj.toggleChecked(jQuery(this));
          thisObj.bShowManualChecks = !thisObj.bShowManualChecks;
-         thisObj.populateSummary();
+         thisObj.toggleFilter(jQuery(this));
          return false;
       })
       .on('keydown', function(e) {
          if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
-            thisObj.toggleChecked(jQuery(this));
             thisObj.bShowManualChecks = !thisObj.bShowManualChecks;
-            thisObj.populateSummary();
+            thisObj.toggleFilter(jQuery(this));
             return false;
          }
          return true;
@@ -426,13 +505,18 @@ a11yInspector.addFilterButtonsToPanel = function () {
 
    this.$filters = this.$filters.add($btn);
 
-   this.$panel.append(this.$summary);
+   this.$panel.append($summary);
 };
+
+a11yInspector.toggleFilter = function($filter) {
+   this.toggleChecked($filter);
+   this.populateSummaryViews();
+}
 
 a11yInspector.buildSummaryTabpanel = function() {
    var thisObj = this;
 
-   this.$summaryTablist = jQuery('<ul>')
+   var $summaryTablist = jQuery('<ul>')
       .attr({
          'role': 'tablist',
          'aria-label': 'Summary View'
@@ -463,16 +547,19 @@ a11yInspector.buildSummaryTabpanel = function() {
 
    // Add event handlers
    this.$summaryTabs.on('click', function() {
+      thisObj.hideAllElementResults();
       thisObj.selectTab(jQuery(this));
       return false;
    })
    .on('keydown', function(e) {
       switch(e.which) {
          case thisObj.keys.left: {
+            thisObj.hideAllElementResults();
             thisObj.moveToPrevTab(thisObj.$summaryTabs, jQuery(this));
             return false;
          }
          case thisObj.keys.right: {
+            thisObj.hideAllElementResults();
             thisObj.moveToNextTab(thisObj.$summaryTabs, jQuery(this));
             return false;
          }
@@ -481,14 +568,15 @@ a11yInspector.buildSummaryTabpanel = function() {
       return true;
    });
 
-   this.$summaryTablist.append(this.$summaryTabs);
-   this.$panel.append(this.$summaryTablist);
+   $summaryTablist.append(this.$summaryTabs);
+   this.$panel.append($summaryTablist);
 
    this.$summaryPanels = jQuery('<div>')
       .attr({
          'role': 'tabpanel',
          'id': 'a11y-category-panel',
-         'aria-hidden': 'false'
+         'aria-hidden': 'false',
+         'aria-label': 'Category Result List'
       })
       .addClass('a11y-results-panel');
 
@@ -496,19 +584,19 @@ a11yInspector.buildSummaryTabpanel = function() {
       .attr({
          'role': 'tabpanel',
          'id': 'a11y-wcag-panel',
-         'aria-hidden': 'true'
+         'aria-hidden': 'true',
+         'aria-label': 'WCAG 2.0 Result List'
       })
       .addClass('a11y-results-panel');
 
    this.$summaryPanels = this.$summaryPanels.add($panel);
 
-
-   this.populateSummary();
+   this.populateSummaryViews();
 
    this.$panel.append(this.$summaryPanels);
 };
 
-a11yInspector.populateSummary = function() {
+a11yInspector.populateSummaryViews = function() {
    var thisObj = this;
    var $view;
    var bWCAG = false;
@@ -563,7 +651,7 @@ a11yInspector.populateSummary = function() {
          (resultCount.w && this.bShowWarnings) ||
          (resultCount.mc && this.bShowManualChecks) )) {
             continue;
-         }
+      }
 
       if (ndx > this.viewEnum.ALL_RULES) {
          // WCAG rule groups follow category groups
@@ -882,8 +970,29 @@ a11yInspector.hideElementResults = function($elementPanel, $rulesPanel, $trigger
    $rulesPanel.attr('aria-hidden', 'false');
    $elementPanel.attr('aria-hidden', 'true').empty();
 
+   this.$hlContainer.empty();
+   this.$hlElem = $();
+
    // set focus on the rule item in the category grid
    $trigger.focus();
+};
+a11yInspector.hideAllElementResults = function() {
+   this.$panel.find('.a11y-elementresults[aria-expanded=true]').attr('aria-expanded', 'false');
+   this.$elementResultsPanel.attr('aria-hidden', 'true').empty();
+
+   // collapse all accordians
+   var $accordians = this.$panel.find('.a11y-summarylist-button[aria-expanded=true]');
+
+   $accordians.each(function(index) {
+      var $controlled = $('#' + $(this).attr('aria-controls'));
+
+      $(this).attr('aria-expanded', 'false');
+      $controlled.attr('aria-hidden', 'true');
+   });
+
+   this.$hlContainer.empty();
+   this.$hlElem = $();
+
 };
 
 a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $trigger, rule) {
@@ -929,6 +1038,7 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
 
    $elementPanel.append('<h4 id="a11y-elementresults-hdg' + $trigger.data('rulendx') + '" class="a11y-elementhdg">' + $trigger.text() + ' (' + ruleTypeVal + ')</h4>');
 
+   this.addRuleInfo($elementPanel, rule);
    switch (ruleType) {
       case resultVal.VIOLATION: {
          ruleObj = rule.element_results_violations;
@@ -975,7 +1085,6 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
          .text(element.element_identifier)
          .appendTo($tr)
          .on('click', function() {
-
             thisObj.handleOverlay(jQuery(this));
             return false;
          })
@@ -1005,12 +1114,90 @@ a11yInspector.populateElementResults = function($elementPanel, $rulesPanel, $tri
    $elementPanel.append($resultsTable);
 };
 
+a11yInspector.addRuleInfo = function($panel, rule) {
+   var thisObj = this;
+   var msgArray = rule.getResultMessagesArray();
+   var primarySC = rule.rule.getPrimarySuccessCriterion();
+   var relatedSCs = rule.rule.getRelatedSuccessCriteria();
+   var techniques = rule.rule.getTechniques();
+   var infoLinks = rule.rule.getInformationalLinks();
+
+   var info = '<h5>Definition</h5>'
+         + '<p id="a11y-elementresults-desc" class="a11y-elementdesc">' + rule.getRuleDefinition() + '</p>'
+         + '<h5>Action</h5>';
+
+   for (ndx = 0; ndx < msgArray.length; ndx++) {
+      info += '<p>' + msgArray[ndx] + '</p>';
+   }
+
+   info += '<h5>Purpose</h5><p>' + rule.rule.getPurpose() + '</p>';
+   info += '<h5>Compliance</h5><p>WCAG 2.0 Level ' + primarySC.level_nls + '</p>';
+   info += '<h5>WCAG 2.0 Success Criteria</h5><ul>';
+   info += '<li><a href="' + primarySC.url_spec + '">' + primarySC.title + '</a></li>';
+
+   for (ndx = 0; ndx < relatedSCs.length; ndx++) {
+      info += '<li><a href="' + relatedSCs[ndx].url_spec + '">' + relatedSCs[ndx].title + '</a></li>';
+   }
+   info += '</ul><h5>Techniques</h5><ul>';
+   for (ndx = 0; ndx < techniques.length; ndx++) {
+      info += '<li>' + techniques[ndx] + '</li>';
+   }
+
+   info += '</ul><h5>Additional Information</h5><ul>';
+   for (ndx = 0; ndx < infoLinks.length; ndx++) {
+      info += '<li><a href="' + infoLinks[ndx].url + '">' + infoLinks[ndx].title + '</a></li>';
+   }
+   info += '</ul>';
+
+   var $infoContainer = $('<div>').addClass('a11y-rule-info').attr('aria-expanded', 'false').html(info);
+
+   this.$infoToggle = $('<div>').attr({
+      'role': 'button',
+      'aria-expanded': 'false',
+      'tabindex': '0',
+   })
+   .addClass('a11y-infobutton')
+   .html('Rule Information <div class="a11y-expand-arrow"></div>')
+   .on('click', function(e) {
+      if (thisObj.$infoToggle.attr('aria-expanded') == 'false') {
+         $infoContainer.show();
+         thisObj.$infoToggle.attr('aria-expanded', 'true');
+      }
+      else {
+         $infoContainer.hide();
+         thisObj.$infoToggle.attr('aria-expanded', 'false');
+      }
+   })
+   .on('keydown', function(e) {
+      if (e.which === thisObj.keys.enter || e.which === thisObj.keys.space) {
+         if (thisObj.$infoToggle.attr('aria-expanded') == 'false') {
+            $infoContainer.show();
+            thisObj.$infoToggle.attr('aria-expanded', 'true');
+         }
+         else {
+            $infoContainer.hide();
+            thisObj.$infoToggle.attr('aria-expanded', 'false');
+         }
+      }
+   }).appendTo($panel);
+
+   $panel.append($infoContainer);
+};
+
 a11yInspector.handleOverlay = function($elem) {
 
    var dom_element = $elem.data('elem');
    var style = dom_element.computed_style;
    var VISIBILITY = OpenAjax.a11y.VISIBILITY;
    var scrollTop = jQuery(document).scrollTop();
+
+   if (this.$hlElem.length) {
+      if ($elem.get(0) === this.$hlElem.get(0)) {
+         this.$hlContainer.empty();
+         this.$hlElem = $();
+         return;
+      }
+   }
 
    if (dom_element.node) {
       switch (style.is_visible_onscreen) {
@@ -1025,9 +1212,6 @@ a11yInspector.handleOverlay = function($elem) {
             return;
          }
       }
-   }
-   else {
-      console.log('no node');
    }
 
    var elemTop = style.top;
@@ -1057,6 +1241,8 @@ a11yInspector.handleOverlay = function($elem) {
          this.$panel.css('top', (jQuery(document).scrollTop() + 10) + 'px');
       }
    }
+
+   this.$hlElem = $elem;
 };
 a11yInspector.toggleChecked = function($btn) {
    if ($btn.attr('aria-checked') === 'true') {
@@ -1098,6 +1284,10 @@ a11yInspector.handleDrag = function(e) {
    });
 };
 a11yInspector.handleResize = function() {
+
+   if (!this.bPanelVisible) {
+      return;
+   }
 
    var docScroll = {
       left: jQuery(document).scrollLeft(),

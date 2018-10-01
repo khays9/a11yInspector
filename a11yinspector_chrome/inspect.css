@@ -111,6 +111,7 @@
 	border-collapse: collapse;
 	border-spacing: 0;
 }
+/* End Reset */
 
 #a11y-panel {
    position: absolute;
@@ -173,6 +174,30 @@
 #a11y-panel .a11y-close:after {
    transform: rotate(-45deg);
 }
+#a11y-panel .a11y-rerun {
+   position: absolute;
+   top: 5px;
+   left: 5px;
+   outline: none;
+   width: 30px;
+   height: 30px;
+   border: 1px solid #222;
+   border-radius: 5px;
+   background-color: #ddd;
+   transform: rotate(0deg);
+   transition: transform 0.5s;
+}
+#a11y-panel .a11y-rerun:hover svg,
+#a11y-panel .a11y-rerun:focus svg {
+   transform: rotate(180deg);
+   transition: transform 0.5s;
+}
+#a11y-panel .a11y-rerun:hover svg path,
+#a11y-panel .a11y-rerun:focus svg path {
+   fill: #07d;
+}
+#a11y-panel .a11y-rerun:hover,
+#a11y-panel .a11y-rerun:focus,
 #a11y-panel .a11y-close:hover,
 #a11y-panel .a11y-close:focus {
    border-color: #07d;
@@ -281,7 +306,7 @@
    background-color: #fff;
    border-bottom: 1px solid #ddd;
 }
-#a11y-panel .a11y-summarylist-button > .a11y-expand-arrow {
+#a11y-panel .a11y-expand-arrow {
    position: absolute;
    right: 0.25em;
    top: 1em;
@@ -297,7 +322,7 @@
 
 }
 
-#a11y-panel .a11y-summarylist-button[aria-expanded=true] > .a11y-expand-arrow {
+#a11y-panel [aria-expanded=true] > .a11y-expand-arrow {
    transform: rotate(180deg);
    transition: transform 0.15s;
 }
@@ -335,7 +360,7 @@
    font-size: 0.8em;
 }
 #a11y-panel .a11y-summarylist-panel {
-   padding: 2px 0;
+   padding: 0.5em;
    height: 275px;
    overflow: auto;
    box-shadow: 0 0 4px #000 inset;
@@ -427,6 +452,61 @@
    text-align: center;
    font-size: 0.8em;
 }
+#a11y-panel .a11y-infobutton {
+   position: relative;
+   width: 80%;
+   margin: 0.75em auto 0.5em auto;
+   background-color: #eee;
+   border: 1px solid #222;
+   border-radius: 5px;
+   text-align: center;
+   font-size: 0.8em;
+}
+#a11y-panel .a11y-infobutton > .a11y-expand-arrow {
+   top: 0.25em;
+}
+#a11y-panel .a11y-rule-info {
+   display: none;
+   padding: 0 0.5em 0.5em;
+   border: none;
+}
+#a11y-panel .a11y-infobutton[aria-expanded=true] + .a11y-rule-info {
+   margin-bottom: 1em;
+   box-shadow: 0 0 5px 0px #666 inset;
+   border-top: 1px solid #666;
+   border-bottom: 1px solid #666;
+}
+#a11y-panel .a11y-rule-info p,
+#a11y-panel .a11y-rule-info li,
+#a11y-panel .a11y-rule-info a {
+   font-size: 0.875em;
+   text-shadow: none;
+}
+#a11y-panel .a11y-rule-info a {
+   text-decoration: underline;
+}
+#a11y-panel .a11y-rule-info a:hover,
+#a11y-panel .a11y-rule-info a:focus {
+   background-color: #ffd84f;
+}
+
+#a11y-panel .a11y-rule-info li a {
+   font-size: 1.0em;
+}
+#a11y-panel .a11y-rule-info h5 {
+   margin-top: 1em;
+   font-weight: bold;
+}
+#a11y-panel .a11y-rule-info p {
+   margin: 0.5em 0;
+}
+#a11y-panel .a11y-rule-info ul {
+   padding-left: 1em;
+}
+#a11y-panel .a11y-rule-info li {
+   list-style: circle;
+   margin: 0.5em 0;
+}
 #a11y-panel #a11y-elementresults {
    height: 300px;
    overflow: auto;
@@ -448,7 +528,9 @@
 #a11y-panel [role=gridcell]:hover,
 #a11y-panel [role=gridcell]:focus,
 #a11y-panel .a11y-backbtn:hover,
-#a11y-panel .a11y-backbtn:focus {
+#a11y-panel .a11y-backbtn:focus,
+#a11y-panel .a11y-infobutton:hover,
+#a11y-panel .a11y-infobutton:focus {
    background-color: #ffd84f;
 }
 
@@ -458,7 +540,9 @@
    z-index: 10000;
    border: 2px solid #f00;
 }
-#a11y-panel[aria-hidden=true],
 #a11y-panel [aria-hidden=true] {
    display: none;
+}
+#a11y-panel svg[aria-hidden=true] {
+   display: inherit;
 }
